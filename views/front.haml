@@ -1,0 +1,22 @@
+!!!
+%html{lang: 'en'}
+  %head
+    %meta{charset: 'utf-8'}/
+    %meta{content: 'IE=edge', 'http-equiv' => 'X-UA-Compatible'}/
+    %meta{content: 'width=device-width, initial-scale=1', name: 'viewport'}/
+    %title msgpaged
+    %link{href: 'https://bootswatch.com/cyborg/bootstrap.min.css', rel: 'stylesheet'}/
+    %style .table>tbody>tr>td { vertical-align: top; }
+    %script{src: 'https://code.jquery.com/jquery-2.1.3.min.js'}
+    %script{src: 'https://code.jquery.com/ui/1.11.4/jquery-ui.min.js'}
+    %script{src: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js'}
+    %script{src: rocketio_js}
+  %body
+    %table.table.table-striped{width: '100%'}
+      %thead
+        %tr
+          %th Stamp
+          %th Source
+          %th Content
+      %tbody#content
+  %script{src: '/js/main.js'}

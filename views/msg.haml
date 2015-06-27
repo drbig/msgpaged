@@ -1,0 +1,4 @@
+%td.text-nowrap= msg.stamp.strftime('%H:%M:%S')
+%td.text-nowrap
+  %a{href: msg.source.link, target: '_blank'}= msg.source.name
+%td{width: '100%'}= msg.content
