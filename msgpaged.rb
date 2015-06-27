@@ -29,38 +29,18 @@ rescue StandardError => e
   exit(2)
 end
 
-MsgSource = Struct.new(:name, :link)
-
 class Message
   attr_reader :stamp, :source, :content
-  attr_accessor :html
+  Source = Struct.new(:name, :link)
 
   def initialize(hash)
     @stamp = Time.parse(hash['stamp'])
-    @source = MsgSource.new(hash['source']['name'], hash['source']['link'])
+    @source = Source.new(hash['source']['name'], hash['source']['link'])
     @content = Sanitize.fragment(hash['content'], Sanitize::Config::BASIC)
-    @html = nil
-  end
-end
-
-class Cache < Array
-  def initialize(max_size)
-    @max_size = max_size
-    @mutex = Mutex.new
   end
 
-  def add(item)
-    @mutex.synchronize do
-      unshift(item)
-      pop if length > @max_size
-      item
-    end
-  end
-
-  def get(n = 1)
-    @mutex.synchronize do
-      slice(0, n)
-    end
+  def to_s
+    "#{@stamp.strftime('%H:%M:%S')} #{@source.name} #{@content}"
   end
 end
 
@@ -82,48 +62,41 @@ class MSGPaged < Sinatra::Base
     set :rocketio, websocket: true, comet: true
   end
 
-  set :cache, Cache.new(32)
-
   register Sinatra::RocketIO
   io = Sinatra::RocketIO
   set :io, io
 
-  helpers do
-    def cache
-      settings.cache
-    end
+  io.on :connect do |client|
+    puts "IO connected <#{client.session}> type:#{client.type} address:#{client.address}"
+  end
 
+  io.on :disconnect do |client|
+    puts "IO disconnected <#{client.session}> type:#{client.type}"
+  end
+
+  helpers do
     def io
       settings.io
     end
 
-    def log(level, msg)
-      request.logger.send(level, msg)
-    end
-
     def crap(exception)
-      log :error, exception.to_s
-      log :error, exception.backtrace.join("\n")
+      puts exception.to_s
+      puts exception.backtrace.join("\n")
     end
   end
 
   post '/msg/new' do
-    content_type 'application/json'
+    content_type('application/json')
     begin
       data = JSON.parse(request.env['rack.input'].read)
       Thread.new do
-        new = 0
-        data.each do |item|
-          begin
-            msg = Message.new(item)
-            msg.html = haml :msg, locals: {msg: msg}
-            cache.add(msg)
-            new += 1
-          rescue StandardError => e
-            crap(e)
-          end
+        begin
+          msg = Message.new(data)
+          puts msg
+          io.push(:msg, haml(:msg, locals: {msg: msg}))
+        rescue StandardError => e
+          crap(e)
         end
-        io.push(:new, new) if new > 0
       end
       '{"success": true}'
     rescue StandardError => e
@@ -132,13 +105,8 @@ class MSGPaged < Sinatra::Base
     end
   end
 
-  get '/msg/get/:n' do
-    content_type 'application/json'
-    cache.get(params[:n].to_i).map(&:html).reverse.to_json
-  end
-
   get '/' do
-    haml :front
+    haml(:front)
   end
 end
 

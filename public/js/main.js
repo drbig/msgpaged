@@ -18,17 +18,13 @@ function isVisible(el) {
   );
 }
 
-io.on('new', function(n) {
-  $.getJSON('/msg/get/' + n, function(data) {
-    $.each(data, function(key, val) {
-      $content.prepend('<tr id="msg' + id + '"></div>');
-      $('#msg' + id).html(val).effect("highlight", 500);
-      id++;
-      var tail = $('#msg' + tail_id);
-      if (!isVisible(tail)) {
-        tail.remove();
-        tail_id++;
-      };
-    });
-  });
+io.on('msg', function(data) {
+  $content.prepend('<tr id="msg' + id + '"></div>');
+  $('#msg' + id).html(data).effect("highlight", 500);
+  id++;
+  var tail = $('#msg' + tail_id);
+  if (!isVisible(tail)) {
+    tail.remove();
+    tail_id++;
+  };
 });
