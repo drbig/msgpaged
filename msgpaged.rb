@@ -30,12 +30,33 @@ rescue StandardError => e
 end
 
 class Message
-  attr_reader :stamp, :source, :content
+  attr_reader :stamp, :source, :content, :label
   Source = Struct.new(:name, :link)
+  class Label
+    attr_reader :text
+
+    def initialize(hash)
+      if hash.nil?
+        @text = @type = nil
+      else
+        @text = hash['text']
+        @type = hash['type']
+      end
+    end
+
+    def any?
+      !(@text.nil? || @text.empty?)
+    end
+
+    def type
+      (@type.nil? || @type.empty?) ? 'default' : @type
+    end
+  end
 
   def initialize(hash)
     @stamp = Time.parse(hash['stamp'])
     @source = Source.new(hash['source']['name'], hash['source']['link'])
+    @label = Label.new(hash['label'])
     @content = Sanitize.fragment(hash['content'], Sanitize::Config::BASIC)
   end
 
